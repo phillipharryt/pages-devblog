@@ -1,0 +1,247 @@
+<html>
+ <timestamp>
+  07/01/2026
+ </timestamp>
+ <head>
+  <link href="../../tufte.css" rel="stylesheet"/>
+  <link href="../../custom.css" rel="stylesheet"/>
+ </head>
+ <body>
+  <div class="content">
+   <h1>
+    Null Safe Operator in Python
+   </h1>
+   <h2>
+    Making python safer ... at what cost
+   </h2>
+   <p>
+    Python doesn't have a null safe operator, meaning when you use the . accessor on 
+    an object it will throw an exception if the attribute is missing.
+    <br/>
+    <br/>
+    Other languages have null safe versions of this, usually denoted with a ?., ensuring the author 
+    is aware that the return value can be null.
+    <br/>
+    Why does python not have this?? Well it's been proposed
+    <a href="https://peps.python.org/pep-0505/">
+     here
+    </a>
+    ,
+    <a href="https://peps.python.org/pep-053/">
+     and here
+    </a>
+    ,
+    <a href="https://mail.python.org/archives/list/python-ideas@python.org/thread/6NHOUO2IJ64E6XP6VA3QA7YYBEMBBUM3/">
+     and here
+    </a>
+    but rejected for being  "ugly" and "unpythonic".
+    <br/>
+    <br/>
+    But because python is python, a feature not being in the standard library or syntax doesn't stop us from adding it. 
+    If you really want to, here's a way of doing so.
+    <br/>
+    <br/>
+    Firstly it's important to understand what the humble . does what accessing an attribute.
+    <br/>
+    In python it's actually a proxy for the __getattribute__ method on a class.  
+    Once we know this, and we know in python you can redefine any function, it's pretty clear the next step. Just redefine __getattribute__.
+    <br/>
+    1 important caveat is you
+    <b>
+     cannot
+    </b>
+    overwrite the . operator universally.  
+    The operator is a method on the object class in python and it is immutable.  
+    So from here onwards we'll assume we're overwriting it for a class. If you want other classes to behave this way, just have them inherit it.
+    <br/>
+    <br/>
+    The first thought might be to redefine it like this:
+   </p>
+   <pre><code>
+    class Example:
+        def __getattribute__(self, attribute):
+            if attribute not in self.__dict__:
+                return(None)
+            else:
+                return(self.__getattribute__(attribute))
+    </code></pre>
+   <p>
+    Which makes sense for about 3 lines before you realise it will infinitely recurse. 
+    And then upon further inspection it makes even less sense, because we use .__dict__, which will itself call
+    __getattribute__, which we've just redefined.  
+    Because we're only redefining it for one class, and not redefining the inbuilt 'object' class method, we 
+    can use the object.__getattribute__  which still does what you expect it to. Let's try again:
+    <br/>
+   </p>
+   <pre><code>
+    class Example:
+        def __getattribute__(self, attribute):
+            if attribute not in object.__getattribute__(self, '__dict__'):
+                return(None)
+            else:
+                return(object.__getattribute__(self, attribute))
+    </code></pre>
+   <p>
+    This works, but returns None, so we can't chain it safely because trying to access the attribute on None would fail. 
+    So let's define a class call
+    <i>
+     DotError
+    </i>
+    instead of None, then if you try access anything on the DotError object it returns itself.
+    <br/>
+    This means that your safe accessor won't return None or throw an error, but will return a DotError instance, and chaining will work.
+   </p>
+   <pre><code>
+    class DotError: 
+        def __getattribute__(self, attribute):
+            return(self)
+    
+    class example:
+        def __getattribute__(self, attribute):
+            if attribute not in object.__getattribute__(self, '__dict__'):
+                return(DotError())
+            else:
+                return(object.__getattribute__(self, attribute))
+    </code></pre>
+   <p>
+    Now chaining of the operators works without an exception, but returns an instance, so if you're checking for truthyness at the end it's going
+    to return as True. Let's redefine the __eq__ method so you can make it equal to false.
+   </p>
+   <pre><code>
+    class DotError: 
+        def __getattribute__(self, attribute):
+            return(self)
+        
+        def __eq__(self, other):
+            return(other is None)
+    </code></pre>
+   <h3>
+    But what about indexing?
+   </h3>
+   <p>
+    Well we're pretty deep into overriding now, might as well go the whole way.  
+    Currently it only works for chained dot operators, but if you throw an index in there and you've encountered a missing attribute along the way
+    it will end up trying to index a DotError instance, which will cause an issue. Fortunately the [] accessor is just nice way of calling __getitem__, so let's override that. 
+    Our final code will look like this:
+    <br/>
+   </p>
+   <pre><code>
+    class DotError: 
+        def __getattribute__(self, attribute):
+            return(self)
+
+        def __eq__(self, other):
+            other is None
+        
+        def __getitem__(self, item: int):
+            return(self)
+    class example:
+        def __getattribute__(self, attribute):
+            if attribute not in object.__getattribute__(self, '__dict__'):
+                return(DotError())
+            else:
+                return(object.__getattribute__(self, attribute))
+    </code></pre>
+   <p>
+    And that's it! You've now got a class that has a safe dot operator. You could share this with other classes by defining it as global function
+    and individually overriding other classes' __getattribute__ methods, or you can use inheritance.
+    <br/>
+    <h3>
+     Making it a lot safer
+    </h3>
+    <p>
+     Yes that was a fun example, but we're overriding a builtin, there are probably a million edge cases I haven't considered.  
+    The safer version of this relies on another inbuilt method
+     <i>
+      __getattr__
+     </i>
+     .
+     <br/>
+     You see
+     <i>
+      __getattribute__
+     </i>
+     is basically the port of first call when it comes to accessing attributes. Itself it won't throw an exception, 
+    , it will call __getattr__ (when using the ., not when directly called), which is the function that throws the exception. 
+    So you can preserve __getattribute__ and switch the above code to overriding __getattr__. 
+    So the safer version looks like this:
+     <br/>
+    </p>
+    <pre><code>
+
+class example:
+    def __getattrr__(self, attribute):
+        if attribute not in object.__getattribute__(self, '__dict__'):
+            return(DotError())
+        else:
+            return(object.__getattribute__(self, attribute))
+    </code></pre>
+    <p>
+     <h3>
+      Typehinting in editors
+     </h3>
+     <p>
+      One great part about this method is it works implicitly with typehinting in editors. If you annotate your classes and the attribute accessed is valid
+   it will be suggested, if it's invalid it will show the return type as DotError
+     </p>
+     <h3>
+      Fun Additions
+     </h3>
+     <p>
+      Because we're no-longer throwing exceptions it may be hard to find out where your chained accessor went wrong.
+      <br/>
+      For this reason I like to modify the DotError to take an argument of the attribute used, and save it. This means when the value is returned 
+   it bubbles up the first error attribute
+      <br/>
+     </p>
+     <pre><code>
+
+class example:
+    attribute: str
+    def __init__(self, attribute):
+        self.attribute = attribute
+    def __getattrr__(self, attribute):
+        if attribute not in object.__getattribute__(self, '__dict__'):
+            return(DotError())
+        else:
+            return(object.__getattribute__(self, attribute))
+    </code></pre>
+     <h3>
+      Warnings
+     </h3>
+     <p>
+      Having to introduce your own null safe operator is likely to be an example of solving the problem in the wrong place.  
+    It is really convenient to be able to write
+      <br/>
+      <br/>
+      <tt>
+       if vehicle.doors.handle: ...
+      </tt>
+      <br/>
+      <br/>
+      , but it's probably better to write more specific
+    classes and functions to handle exact cases.
+      <br/>
+      As soon as you introduce an instance that has many null-safe permutations you should be testing all of these, so there's a tradeoff between
+    not throwing errors and having to test more cases.
+     </p>
+    </p>
+   </p>
+  </div>
+  <div class="sidebar no-print">
+   <h2>
+    <a href="/index.html">
+     Home
+    </a>
+    <h2>
+     <h3>
+      Categories
+     </h3>
+    </h2>
+   </h2>
+   <a href="/posts/Python Writings/Python Writings.html">
+    Python Writings
+   </a>
+  </div>
+ </body>
+</html>
