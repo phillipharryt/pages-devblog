@@ -1,4 +1,5 @@
-from utils import *
+from utils import Utils
+import sys
 def compile():
     """
     #### Inputs:
@@ -8,17 +9,24 @@ def compile():
             each one is considered a category 
         - inside each directory each post is added to a list
     """
-    category_list = build_category_list()
-    for each in category_list:
-        generate_category_page(each)
-    sidebar_soup = build_sidebar_soup(category_list)
-    add_sidebar_to_all_posts(sidebar_soup)
-    # add_stylesheet_to_all_files()
-    add_recent_posts_to_homepage()
+    instance = Utils()
+    instance.GITHUB_URL = ''
+    _shared_compile(instance)
+   
     
 def compile_for_github(github_url: str):
-    GITHUB_URL = github_url
-    compile()
+    instance = Utils()
+    instance.GITHUB_URL = github_url
+    _shared_compile(instance)
+    
+def _shared_compile(instance: Utils):
+    category_list = Utils.build_category_list()
+    for each in category_list:
+        instance.generate_category_page(each)
+    sidebar_soup = instance.build_sidebar_soup(category_list)
+    Utils.add_sidebar_to_all_posts(sidebar_soup)
+    # add_stylesheet_to_all_files()
+    instance.add_recent_posts_to_homepage()
 
     
 if __name__ == '__main__':
