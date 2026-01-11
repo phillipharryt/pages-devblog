@@ -4,6 +4,9 @@ from datetime import date
 from bs4 import BeautifulSoup
 from copy import deepcopy
 
+
+GITHUB_URL = ''
+
 class Post:
     filename: str
     title: str
@@ -129,7 +132,7 @@ def build_sidebar_soup(category_list: list[Category]) -> BeautifulSoup:
     """
     sidebar_string = f"""
     <div class="sidebar no-print">
-        <h2><a href="/index.html">Home</a><h2>
+        <h2><a href="{GITHUB_URL}/index.html">Home</a><h2>
         <h3>Categories</h3>
     </div>
     """
@@ -137,7 +140,7 @@ def build_sidebar_soup(category_list: list[Category]) -> BeautifulSoup:
     div = sidebar_soup.div
     for category in category_list:
         sidebar_link = sidebar_soup.new_tag('a')
-        sidebar_link['href'] = f'/posts/{category.name}/{category.name}.html'
+        sidebar_link['href'] = f'{GITHUB_URL}/posts/{category.name}/{category.name}.html'
         sidebar_link.string = category.name
         div.append(sidebar_link)
     return(sidebar_soup)
@@ -315,3 +318,5 @@ def add_recent_posts_to_homepage():
     write_html(root, 'index.html')
     ### this doens't work 
     
+    
+    ### on github all links need a pre-prend to them like pages-devblog. Need a setting that adds this to root, Probably a constant

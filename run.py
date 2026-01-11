@@ -15,6 +15,10 @@ def compile():
     add_sidebar_to_all_posts(sidebar_soup)
     # add_stylesheet_to_all_files()
     add_recent_posts_to_homepage()
+    
+def compile_for_github(github_url: str):
+    GITHUB_URL = github_url
+    compile()
 
     
 if __name__ == '__main__':
