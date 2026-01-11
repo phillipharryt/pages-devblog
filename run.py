@@ -16,7 +16,7 @@ def compile():
     
 def compile_for_github(github_url: str):
     instance = Utils()
-    instance.GITHUB_URL = github_url
+    instance.GITHUB_URL = f'/{github_url}'
     _shared_compile(instance)
     
 def _shared_compile(instance: Utils):

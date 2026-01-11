@@ -133,7 +133,7 @@ class Utils:
         """
         sidebar_string = f"""
         <div class="sidebar no-print">
-            <h2><a href="/index.html">Home</a><h2>
+            <h2><a href="{self.GITHUB_URL}/index.html">Home</a><h2>
             <h3>Categories</h3>
         </div>
         """
@@ -234,7 +234,7 @@ class Utils:
         for post in category.posts:
             post_string = f"""
             <h3>
-                <a href="../../{post.filename}">{post.title}</a>
+                <a href="{post.filename}">{post.title}</a>
             </h3>
             <h4>{post.description}</h4>
             <br/>
