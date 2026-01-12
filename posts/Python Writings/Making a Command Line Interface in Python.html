@@ -1,0 +1,78 @@
+<html>
+ <timestamp>
+  12/01/2026
+ </timestamp>
+ <head>
+  <link href="../../tufte.css" rel="stylesheet"/>
+  <link href="../../custom.css" rel="stylesheet"/>
+ </head>
+ <body>
+  <div class="content">
+   <h1>
+    Making a Command Line Interface in Python
+   </h1>
+   <h2>
+    One function to call them all 
+   </h2>
+  <p>
+    Making python scrips callable from the command line is fairly simple, <a href="https://realpython.com/run-python-scripts/">Real Python</a> will explain
+    pretty easily how to run a file.  
+    <br>
+    But that's moreso for one script running in one file. I often find myself collating functionality into a file or a class, and then I want to be able to call
+    those functions from the command line. 
+    Over the years I've built up this little script, it's simple but incredibly versatile. <br>
+    The end result will be you can call any function in a python file using this syntax 
+    <pre>
+        <code>
+            python3 -m filename functionname (any number of arguments)
+        </code>
+    </pre>
+    <br>
+    In addition to these you'll be able to typehint your function parameters, cast the incoming terminal arguments automatically into these hinted types,
+        and prompt the user if they're missing arguments.  
+    <br>
+    To do all this, just add this script to the end of any python file
+    <pre>
+        <code>
+            import sys 
+            import typing
+            if __name__ == '__main__':
+                func_name = sys.argv[1]
+                func = globals()[func_name]
+                remaining_args = sys.argv[2:]
+                cast_args = []
+                func_args = func.__annotations__
+                for passed_arg, hint_key in zip(remaining_args, list(func.__annotations__.keys())):
+                    hint = func.__annotations__(hint_key)
+                    if(typing.get_origin(hint) is typing.Literal):
+                        expected_values = typing.get_args(hint)
+                        if passed_arg not in expected_values:
+                            raise exception(f'Expected argument in {expected_values} for "{hint_key}" argument, got "{passed_arg}")
+                        cast_args.append(passed_arg)
+                    elif(hint == bool):
+                        cast_args.append(passed_arg in ['true', 'True', 'TRUE'])
+                    else:
+                        cast_args.append(passed_arg)
+                func(cast_args)
+        </code>
+    </pre>
+
+  </p>
+  </div>
+  <div class="sidebar no-print">
+   <h2>
+    <a href="/pages-devblog/index.html">
+     Home
+    </a>
+    <h2>
+     <h3>
+      Categories
+     </h3>
+    </h2>
+   </h2>
+   <a href="../../posts/Python Writings/Python Writings.html">
+    Python Writings
+   </a>
+  </div>
+ </body>
+</html>
