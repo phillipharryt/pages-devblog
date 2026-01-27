@@ -234,7 +234,7 @@ class Utils:
         for post in category.posts:
             post_string = f"""
             <h3>
-                <a href="{post.filename}">{post.title}</a>
+                <a href="{self.GITHUB_URL}/{post.filename}">{post.title}</a>
             </h3>
             <h4>{post.description}</h4>
             <br/>
