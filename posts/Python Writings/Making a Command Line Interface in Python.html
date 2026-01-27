@@ -15,36 +15,48 @@
     One function to call them all
    </h2>
    <p>
-    Making python scripts callable from the command line is fairly simple,<br>
+    Making python scripts callable from the command line is fairly simple,
+    <br/>
     <a href="https://realpython.com/run-python-scripts/">
      Real Python
     </a>
     will explain
     pretty easily how to run a file.
-    <br/>
-    But that's moreso for one script running in one file. I often find myself collating functionality into a file or a class, and then I want to be able to call
-    those functions from the command line. <br>
-    Over the years I've built up this little script, it's simple but incredibly versatile.
-    <br/>
-    The end result will allow you to call any function in a python file using this syntax
-    </p>
-    <pre>
+    <br>
+     But that's moreso for one script running in one file. I often find myself collating functionality into a file or a class, and then I want to be able to call
+    those functions from the command line.
+     <br/>
+     Over the years I've built up this little script, it's simple but incredibly versatile.
+     <br>
+      The end result will allow you to call any function in a python file using this syntax
+     </br>
+    </br>
+   </p>
+   <pre>
         <code>
             python3 filename functionname (any number of arguments)
         </code>
     </pre>
-    <br/>
-    <p>
-    In addition to these you'll be able to 
+   <br/>
+   <p>
+    In addition to these you'll be able to
     <ul>
-        <li>typehint your function parameters</li>
-        <li>cast the incoming terminal arguments automatically to these hinted types</li>
-        <li>prompt the user if they have a missing or invalid argument</li>
-        <li>automatically access new functions without modifying the script</li>
+     <li>
+      typehint your function parameters
+     </li>
+     <li>
+      cast the incoming terminal arguments automatically to these hinted types
+     </li>
+     <li>
+      prompt the user if they have a missing or invalid argument
+     </li>
+     <li>
+      automatically access new functions without modifying the script
+     </li>
     </ul>
     <br/>
     <p>
-    To do all this, just add this script to the end of any python file
+     To do all this, just add this script to the end of any python file
     </p>
     <pre>
         <code>
@@ -70,26 +82,26 @@ if __name__ == '__main__':
     func(*cast_args)
     </code>
     </pre>
-   <p>
-    Now say you had a function with a signature like this, in a file named 'builder.py'
-   </p>
-   <pre>
+    <p>
+     Now say you had a function with a signature like this, in a file named 'builder.py'
+    </p>
+    <pre>
     <code>
         def build_house(windows: int, name: str, garage: bool):...
     </code>
    </pre>
-   <p>
-    You could call this function from your command line like this 
-   </p>
-   <pre>
+    <p>
+     You could call this function from your command line like this
+    </p>
+    <pre>
     <code>
         python3 -m builder build_house 3 IvyHouse False
     </code>
    </pre>
-   <p>
-    And it would pass an integer, string, and boolean value into that function.
+    <p>
+     And it would pass an integer, string, and boolean value into that function.
     You'll note from the code it even works for Literal hints, which can be useful for restricting arguments, for example 
-    if you want a user to specify the environment the script is running in, it might look like this  
+    if you want a user to specify the environment the script is running in, it might look like this
     </p>
     <pre>
         <code>
@@ -97,18 +109,19 @@ if __name__ == '__main__':
         </code>
     </pre>
     <p>
-        And calling this function from the command line with anything other than 'dev', 'stage', or 'prod' would raise an error. 
-        <br>
-        It also makes use of the inbuilt fact optional/required arguments in python. <br>
-        If you don't provide a default value then the user can skip that argument, if not then if the argument is not passed in python will throw the error for you. 
+     And calling this function from the command line with anything other than 'dev', 'stage', or 'prod' would raise an error.
+     <br/>
+     It also makes use of the inbuilt fact optional/required arguments in python.
+     <br/>
+     If you don't provide a default value then the user can skip that argument, if not then if the argument is not passed in python will throw the error for you.
     </p>
-    <br>
-    <br>
+    <br/>
+    <br/>
     <p>
-    Let's step through the code to understand how it works: 
-    <br>
-    <br>
-    Ignoring the imports, the first line: 
+     Let's step through the code to understand how it works:
+     <br/>
+     <br/>
+     Ignoring the imports, the first line:
     </p>
     <pre>
         <code>
@@ -116,10 +129,14 @@ if __name__ == '__main__':
         </code>
     </pre>
     <p>
-    Again, <a href="https://realpython.com/if-name-main-python/">Real Python</a> has beat me to it on this explanation,
-        but basically this ensures this code only runs if the context is running the file as a script, rather than an import.  
+     Again,
+     <a href="https://realpython.com/if-name-main-python/">
+      Real Python
+     </a>
+     has beat me to it on this explanation,
+        but basically this ensures this code only runs if the context is running the file as a script, rather than an import.
     </p>
-    <br>
+    <br/>
     <pre>
         <code>
             func_name = sys.argv[1]
@@ -130,13 +147,16 @@ if __name__ == '__main__':
         </code>
     </pre>
     <p>
-        Here we're using the sys.argv to find the values used in the command line. argv assumes all arguments are separated 
-        by spaces, and the first argument is the file itself, hence we find the function in the second place. <br>
-        When you run a python script the functions are added to a global dictionary, which we access to load up the function specified in our first argument. 
-        <br>
-        Then to allow further arguments to be passed in, we assume anything after the function name is an argument.  <br>
-        The __annotations__ is going to allow us to check the passed in arguments are valid, and cast the incoming strings. All values from the command line are strings, 
-            so to allow the function to have proper typehints we'll need to cast these incoming values.  <br>
+     Here we're using the sys.argv to find the values used in the command line. argv assumes all arguments are separated 
+        by spaces, and the first argument is the file itself, hence we find the function in the second place.
+     <br/>
+     When you run a python script the functions are added to a global dictionary, which we access to load up the function specified in our first argument.
+     <br/>
+     Then to allow further arguments to be passed in, we assume anything after the function name is an argument.
+     <br/>
+     The __annotations__ is going to allow us to check the passed in arguments are valid, and cast the incoming strings. All values from the command line are strings, 
+            so to allow the function to have proper typehints we'll need to cast these incoming values.
+     <br/>
     </p>
     <pre>
         <code>
@@ -151,11 +171,11 @@ if __name__ == '__main__':
 
     </pre>
     <p>
-    Here we're simultaneously looping over the arguments passed in, and the arguments typehinted on the function.  
-    <br>
-    This condition inside the loop is actually only for the case where you have typehinted a Literal. If you have then it checks that the value coming in is 
+     Here we're simultaneously looping over the arguments passed in, and the arguments typehinted on the function.
+     <br/>
+     This condition inside the loop is actually only for the case where you have typehinted a Literal. If you have then it checks that the value coming in is 
         inside the Literal options, if not we throw an error. 
-        Here and in the following conditions we add to the cast_args as that is what we'll eventually use to call the desired function. 
+        Here and in the following conditions we add to the cast_args as that is what we'll eventually use to call the desired function.
     </p>
     <pre>
         <code>
@@ -167,15 +187,16 @@ if __name__ == '__main__':
         </code>
     </pre>
     <p>
-        Here is the simplest part, cast booleans, otherwise use the hint's type to cast the incoming value,
-        <br>
-        Then use * to unpack the cast_args list into the arguments for the specific function and call it.   
-        <br>
-        <br>
-        There you have it, a single function that makes any function in a python file addressable from the command line.  
-        <br>
-        If you happen to have your functions nested in classes, you can extend the function to instantiate those classes, or read on (put link here)
+     Here is the simplest part, cast booleans, otherwise use the hint's type to cast the incoming value,
+     <br/>
+     Then use * to unpack the cast_args list into the arguments for the specific function and call it.
+     <br/>
+     <br/>
+     There you have it, a single function that makes any function in a python file addressable from the command line.
+     <br/>
+     If you happen to have your functions nested in classes, you can extend the function to instantiate those classes, I'll cover that another time.
     </p>
+   </p>
   </div>
   <div class="sidebar no-print">
    <h2>

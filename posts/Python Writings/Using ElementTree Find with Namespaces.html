@@ -1,0 +1,192 @@
+<html>
+ <timestamp>
+  12/01/2026
+ </timestamp>
+ <head>
+  <link href="../../tufte.css" rel="stylesheet"/>
+  <link href="../../custom.css" rel="stylesheet"/>
+ </head>
+ <body>
+  <div class="content">
+   <h1>
+    Using ElementTree Find with Namespaces
+   </h1>
+   <h2>
+    Some proper documentation for an internal library
+   </h2>
+   <p>
+    ElementTree.find and ElementTree.findall are frustratingly poorly documented for a standard library that operates on a common file type. Especially when it comes to using namespaces.
+   </p>
+   <p>
+    If you're having an issue using .find, you might be looking at an elementTree that looks a bit like this:
+   </p>
+   <pre>
+        <code>
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;rss version="2.0" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" xmlns:googleplay="http://www.google.com/schemas/play-podcasts/1.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/" xmlns:content="http://purl.org/rss/1.0/modules/content/"&gt;
+  &lt;channel&gt;
+    &lt;atom:link href="https://feeds.megaphone.fm/nicetry" rel="self" type="application/rss+xml"/&gt;
+    &lt;title&gt;Nice Try! &lt;/title&gt;
+    &lt;link&gt;https://podcasting.voxmedia.com/show/nice-try&lt;/link&gt;
+    &lt;language&gt;en&lt;/language&gt;
+    &lt;itunes:type&gt;episodic&lt;/itunes:type&gt;
+    &lt;itunes:subtitle&gt;Interior&lt;/itunes:subtitle&gt;
+    &lt;itunes:author&gt;Curbed&lt;/itunes:author&gt;
+    &lt;itunes:summary&gt;Nice Try's second season, Interior, is all about the lifestyle products that have been sold to us over and over, and the promises of domestic self improvement they have made, kept and broken.
+From Curbed, New York Magazine and the Vox Media Podcast Network.&lt;/itunes:summary&gt;
+    &lt;/channel&gt;
+&lt;/rss&gt;
+        </code>
+    </pre>
+   <p>
+    We see here it has some elements in the channel, and some with 'itunes:xx'
+    <br/>
+    This is a namespace, and we can see it documented at the top with xmlns:itunes, then a url.
+    <br/>
+    <br/>
+    Say you've parsed the file, and loaded the 'channel' element into the channel variable.
+    <br/>
+    This .find would work, as it's not in a namespace, but then the functions
+channel.find('type') or even channel.find('itunes:type') don't work.
+    <br/>
+    Not to worry, there's an explanation, and a solution.
+    <br/>
+    <br/>
+    Your first thought might be to loop through and print all the tags, using ET.toString just to check that they haven't changed in the process of parsing.
+    <br/>
+    And you'll find they have.
+   </p>
+   <pre>
+    <code>
+        &lt;itunes:type&gt;episodic&lt;/itunes:type&gt;  
+    </code>
+</pre>
+   <p>
+    has printed as
+   </p>
+   <pre>
+        <code>
+            &lt;ns1:type&gt;episodic&lt;/itunes:type&gt;
+        </code>
+    </pre>
+   <p>
+    This is because when you parse the file, ElementTree renames namespaces using an internal naming system.
+    <br/>
+    So you might try change your find into
+    <pre><code>
+channel.find('ns1:type')
+
+</code></pre>
+    <p>
+     This will not work either.
+     <br/>
+     So you could check the element.tag attribute, to see if perhaps the ET.ToString has done something.
+     <br/>
+     And again, it's different, printing this shows
+    </p>
+    <pre>
+        <code>
+
+&lt;{http://www.itunes.com/dtds/podcast-1.0.dtd}type&gt;episodic&lt;/{http://www.itunes.com/dtds/podcast-1.0.dtd}type&gt;  
+        </code>
+    </pre>
+    <p>
+     So you could just change your find to
+    </p>
+    <pre>
+        <code>
+channel.find('{http://www.itunes.com/dtds/podcast-1.0.dtd}:summary')
+        </code>
+    </pre>
+    <p>
+     actually does work, but isn't a long-term solution because you might be writing a program that has schema version updates, you don't want to hardcode a url.
+     <br/>
+     You'll notice on the ElementTree documentation the .find function allows you to pass in a 'namespaces' argument.
+     <br/>
+     You can make use of this, but it's easy to get it wrong. Its use is actually tied to another function of ElementTree, register_namespaces()
+     <br/>
+     <br/>
+     Simply passing
+    </p>
+    <pre>
+    <code>
+channel.find('itunes:type', namespaces = {'itunes':'{http://www.itunes.com/dtds/podcast-1.0.dtd}'}) 
+    </code>
+</pre>
+    <p>
+     doesn't work either, but you'll find
+    </p>
+    <pre>
+    <code>
+channel.find('ns1:type', namespaces = {'ns1':'{http://www.itunes.com/dtds/podcast-1.0.dtd}'}) 
+    </code>
+</pre>
+    <p>
+     does work.
+     <br/>
+     <br/>
+     So what the namespaces argument does is effectively parse replacement strings in, but they must refer to the internally stored namespace identifier.
+     <br/>
+     This again isn't all that useful, because you can't know what this would be ahead of time.
+     <br/>
+     If we want to be able to look at a file, see a tag and search for it using that string, we need to follow these steps.
+    </p>
+    <pre>
+    <code>
+
+ET.register_namespace('itunes', 'http://www.itunes.com/dtds/podcast-1.0.dtd')
+with open(filename, 'r') as r:
+    parsed = ET.parse(r)
+    root = parsed.getroot()
+    channel = root.find('channel') 
+    type_found = channel.find('itunes:type', namespaces={'itunes': 'http://www.itunes.com/dtds/podcast-1.0.dtd'})
+    print(type_found)
+    </code>
+</pre>
+    <p>
+     The first step is to register a namespace. This ensures that when you parse a file it preserves the namespace.
+     <br/>
+     You'll note if you print using ET.ToString now it will 
+print the element as &lt;itunes:type&gt;episodic&lt;/itunes:type&gt;
+     <br/>
+     <br/>
+     Then when you write your .find you can refer to the namespace, but you still have to pass the namespace mapping in.  
+
+As an addition to this, if you want to be able to generally register namespaces for any xml file before parsing it, you can use a function like this
+    </p>
+    <pre>
+    <code>
+def load_namespace_dict_from_filename(filename: str) -&gt; dict[str, str]:
+    with open(filename, 'r') as r:
+        file_string = r.read()
+    match_pattern = r'xmlns:(\w+)[=]["](\S+)["]'
+    matches = re.findall(match_pattern, filestring)
+    namespace_dict = {x[0]:x[1] for x in matches}
+    return(namespace_dict)
+
+    </code>
+</pre>
+    <p>
+     This just opens up the file, and looks for xmlns attributes on any tags,
+     <br/>
+     anything after the : in the attribute is the namespace's name, and after it is ="(url)"
+    </p>
+   </p>
+  </div>
+  <div class="sidebar no-print">
+   <h2>
+    <a href="/index.html">
+     Home
+    </a>
+    <h2>
+     <h3>
+      Categories
+     </h3>
+    </h2>
+   </h2>
+   <a href="../../posts/Python Writings/Python Writings.html">
+    Python Writings
+   </a>
+  </div>
+ </body>
+</html>
