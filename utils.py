@@ -141,7 +141,7 @@ class Utils:
         div = sidebar_soup.div
         for category in category_list:
             sidebar_link = sidebar_soup.new_tag('a')
-            sidebar_link['href'] = f'../../posts/{category.name}/{category.name}.html'
+            sidebar_link['href'] = f'{self.GITHUB_URL}/posts/{category.name}/{category.name}.html'
             sidebar_link.string = category.name
             div.append(sidebar_link)
         return(sidebar_soup)
